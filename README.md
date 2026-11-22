@@ -44,3 +44,11 @@ E2E_REPO=/tmp/e2e-repro-source bun trailing-dot-localhost.ts
 ```
 
 DNS fully-qualified names can end with a `.` marking the root. On macOS, `localhost.` and `api.localhost.` resolve to loopback (`127.0.0.1`/`::1`), but `normalizeBaseUrl('localhost.:3000')` incorrectly defaults to HTTPS and explicitly supplied `http://localhost.:3000` is rejected as a remote HTTP host. The shared implicit-test check also rejects the valid reserved `api.test.` hostname. Expected: treat terminal-root-dot `localhost.` / `.localhost.` like their unqualified equivalents without allowing other remote HTTP domains.
+
+## Reproduce invalid 41–63-digit Git commits accepted as source provenance
+
+```sh
+E2E_REPO=/tmp/e2e-repro-source bun git-sha-length.ts
+```
+
+The E2E VCS helper accepts every lowercase hex string of length **40 through 64** as a full Git commit identity. A Git SHA-1 commit ID is **exactly 40** hex characters and SHA-256 is **exactly 64**; lengths 41–63 cannot represent either. In environments without Git, a bogus 41-digit `GITHUB_SHA` is nevertheless recorded as commit provenance. The script imports the real `git.ts` and `vcs.ts`, tests both legitimate widths and invalid widths, and checks the CI fallback.
