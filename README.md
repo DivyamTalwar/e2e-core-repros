@@ -52,3 +52,11 @@ E2E_REPO=/tmp/e2e-repro-source bun git-sha-length.ts
 ```
 
 The E2E VCS helper accepts every lowercase hex string of length **40 through 64** as a full Git commit identity. A Git SHA-1 commit ID is **exactly 40** hex characters and SHA-256 is **exactly 64**; lengths 41–63 cannot represent either. In environments without Git, a bogus 41-digit `GITHUB_SHA` is nevertheless recorded as commit provenance. The script imports the real `git.ts` and `vcs.ts`, tests both legitimate widths and invalid widths, and checks the CI fallback.
+
+## Reproduce runtime gate accepting unsupported Node/Bun prerelease and malformed versions
+
+```sh
+E2E_REPO=/tmp/e2e-repro-source bun runtime-version-validation.ts
+```
+
+The CLI publishes `engines.node` as `^22.22.3 || >=24.8.0` and accepts stable Bun releases from `1.4.3`. Its runtime checker currently parses each version part using `parseInt`, so `24.8.0-rc.1` and even malformed `24.8.0garbage` are accepted as the stable Node `24.8.0`. Likewise `1.4.3-canary.1` is accepted as stable Bun `1.4.3`. This bypasses the CLI's own supported-release compatibility gate. The source-backed script asserts that the gate rejects prerelease/malformed inputs while accepting stable versions, with no browser, test app, or model.
