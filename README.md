@@ -28,3 +28,11 @@ E2E_REPO=/tmp/e2e-repro-source bun nested-workspace-manager.ts
 ```
 
 The source-backed script uses `Bun.build()` to resolve two `@e2e-dev/core` internal imports to the **actual** upstream TypeScript files, so no E2E dependency installation or code copying is necessary. An outer pnpm monorepo includes `packages/**`; an intermediate package declares an unrelated inner workspace (`plugins/*`) that does *not* include the target `apps/client`. The detector stops at the unrelated inner workspace instead of continuing to the outer matching one, and incorrectly recommends `npm` at the nested package. **Expected:** `{ manager: "pnpm", root: outerProject }`.
+
+## Reproduce a directory being mistaken for a package-manager lockfile
+
+```sh
+E2E_REPO=/tmp/e2e-repro-source bun lockfile-directories.ts
+```
+
+Using the real upstream package-manager module (Bun's source alias plugin for internal core modules), create a folder named `pnpm-lock.yaml` and an actual `package-lock.json` file. The detector currently returns **pnpm** even though **npm** is the only manager with a lockfile. A directory named as a lockfile is not a lockfile and should not override an existing real one.
