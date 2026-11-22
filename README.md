@@ -36,3 +36,11 @@ E2E_REPO=/tmp/e2e-repro-source bun lockfile-directories.ts
 ```
 
 Using the real upstream package-manager module (Bun's source alias plugin for internal core modules), create a folder named `pnpm-lock.yaml` and an actual `package-lock.json` file. The detector currently returns **pnpm** even though **npm** is the only manager with a lockfile. A directory named as a lockfile is not a lockfile and should not override an existing real one.
+
+## Reproduce localhost/test FQDNs with a trailing root dot
+
+```sh
+E2E_REPO=/tmp/e2e-repro-source bun trailing-dot-localhost.ts
+```
+
+DNS fully-qualified names can end with a `.` marking the root. On macOS, `localhost.` and `api.localhost.` resolve to loopback (`127.0.0.1`/`::1`), but `normalizeBaseUrl('localhost.:3000')` incorrectly defaults to HTTPS and explicitly supplied `http://localhost.:3000` is rejected as a remote HTTP host. The shared implicit-test check also rejects the valid reserved `api.test.` hostname. Expected: treat terminal-root-dot `localhost.` / `.localhost.` like their unqualified equivalents without allowing other remote HTTP domains.
